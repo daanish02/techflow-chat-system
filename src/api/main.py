@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.schemas import ConfigResponse, HealthResponse
 from src.config import settings
 from src.rag import get_vector_store
 from src.utils.logger import get_logger
@@ -66,8 +67,8 @@ async def root():
     }
 
 
-@app.get("/health")
-async def health_check():
+@app.get("/health", response_model=HealthResponse)
+async def health_check() -> HealthResponse:
     """
     Health check endpoint.
 
@@ -102,23 +103,23 @@ async def health_check():
     except Exception:
         health_status["llm"] = "unhealthy"
 
-    return health_status
+    return HealthResponse(**health_status)
 
 
-@app.get("/config")
-async def get_config():
+@app.get("/config", response_model=ConfigResponse)
+async def get_config() -> ConfigResponse:
     """
     Get public configuration information.
 
     Returns non-sensitive configuration details.
     """
-    return {
-        "llm_model": settings.LLM_MODEL,
-        "environment": settings.ENVIRONMENT,
-        "langfuse_enabled": settings.langfuse_enabled,
-        "chunk_size": settings.CHUNK_SIZE,
-        "top_k_results": settings.TOP_K_RESULTS,
-    }
+    return ConfigResponse(
+        llm_model=settings.LLM_MODEL,
+        environment=settings.ENVIRONMENT,
+        langfuse_enabled=settings.langfuse_enabled,
+        chunk_size=settings.CHUNK_SIZE,
+        top_k_results=settings.TOP_K_RESULTS,
+    )
 
 
 if __name__ == "__main__":
