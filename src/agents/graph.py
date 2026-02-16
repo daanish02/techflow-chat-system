@@ -4,7 +4,7 @@ from typing import Literal
 
 from langgraph.graph import StateGraph, END
 
-from src.agents.greeter_agent import greeter_node
+from src.agents.greeter_agent import greeter_node_sync
 from src.agents.retention_agent import retention_node_sync
 from src.agents.processor_agent import processor_node_sync
 from src.agents.state import ConversationState
@@ -78,7 +78,7 @@ def create_agent_graph() -> StateGraph:
     graph = StateGraph(ConversationState)
 
     # add nodes
-    graph.add_node("greeter", greeter_node)
+    graph.add_node("greeter", greeter_node_sync)
     graph.add_node("retention", retention_node_sync)
     graph.add_node("processor", processor_node_sync)
 
