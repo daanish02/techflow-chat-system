@@ -1,0 +1,7 @@
+[project]
+name = "techflow-chat-system"
+version = "0.1.0"
+description = "Multi-agent customer support chat system for retention"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
