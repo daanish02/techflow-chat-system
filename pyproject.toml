@@ -5,10 +5,12 @@ description = "Multi-agent customer support chat system for retention"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "graphviz>=0.21",
     "langchain-chroma>=1.1.0",
     "langchain-core>=1.2.13",
     "langchain-google-genai>=4.2.0",
     "langchain-text-splitters>=1.1.0",
+    "langgraph>=1.0.8",
     "pandas>=3.0.0",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.0",

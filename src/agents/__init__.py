@@ -1,5 +1,6 @@
 """Multi-agent system components."""
 
+from src.agents.graph import create_agent_graph, get_agent_graph
 from src.agents.greeter_agent import greeter_node
 from src.agents.processor_agent import processor_node, processor_node_sync
 from src.agents.retention_agent import retention_node, retention_node_sync
@@ -28,4 +29,7 @@ __all__ = [
     "retention_node_sync",
     "processor_node",
     "processor_node_sync",
+    # graph
+    "create_agent_graph",
+    "get_agent_graph",
 ]
