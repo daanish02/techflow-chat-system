@@ -110,8 +110,15 @@ async def greeter_node(
     logger.info("Executing Greeter Agent node")
 
     messages = state["messages"]
+    last_msg = messages[-1] if messages else None
+    last_msg_content = (
+        last_msg.content if last_msg and isinstance(last_msg, HumanMessage) else ""
+    )
+    # check if string
     last_user_msg = (
-        messages[-1].content if isinstance(messages[-1], HumanMessage) else ""
+        str(last_msg_content)
+        if isinstance(last_msg_content, str)
+        else str(last_msg_content)
     )
 
     # initialize updates
