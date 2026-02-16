@@ -210,6 +210,9 @@ def calculate_retention_offer(customer_tier: str, reason: str) -> Dict[str, Any]
             fallback_rules = rules.get("financial_hardship", {})
             offers = fallback_rules.get("new_customers", [])
 
+        # ensure all offers have a description field
+        offers = _normalize_offers(offers)
+
         logger.info(
             f"Generated {len(offers)} retention offers for tier={tier} "
             f"(segment={segment}), reason={reason_key} (category={category})"
@@ -275,6 +278,60 @@ def _resolve_offers(
             return value
 
     return []
+
+
+def _normalize_offers(offers: list) -> list:
+    """
+    Ensure all offers have a description field.
+    
+    For offers missing a description, generates one based on the offer type.
+    
+    Args:
+        offers: List of offer dictionaries
+        
+    Returns:
+        List of offer dictionaries with description guaranteed
+    """
+    normalized = []
+    
+    for offer in offers:
+        # copy to avoid modifying the original
+        normalized_offer = offer.copy()
+        
+        # if description is missing, generate based on type
+        if "description" not in normalized_offer:
+            offer_type = normalized_offer.get("type", "offer")
+            
+            if offer_type == "explain_benefits":
+                benefits = normalized_offer.get("benefits", [])
+                if benefits:
+                    normalized_offer["description"] = f"Review {len(benefits)} key benefits of your plan"
+                else:
+                    normalized_offer["description"] = "Learn about your plan benefits"
+                    
+            elif offer_type == "trial_extension":
+                duration = normalized_offer.get("duration_months", 3)
+                normalized_offer["description"] = f"Extended {duration}-month trial with satisfaction guarantee"
+                
+            elif offer_type == "discount":
+                percentage = normalized_offer.get("percentage", 0)
+                duration = normalized_offer.get("duration_months", 0)
+                normalized_offer["description"] = f"{percentage}% discount for {duration} months"
+                
+            elif offer_type == "pause":
+                duration = normalized_offer.get("duration_months", 0)
+                normalized_offer["description"] = f"Pause subscription for {duration} months"
+                
+            elif offer_type == "downgrade":
+                new_plan = normalized_offer.get("new_plan", "basic plan")
+                normalized_offer["description"] = f"Downgrade to {new_plan}"
+                
+            else:
+                normalized_offer["description"] = f"{offer_type.replace('_', ' ').title()} offer"
+        
+        normalized.append(normalized_offer)
+    
+    return normalized
 
 
 @tool
