@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # model configurations
     LLM_MODEL: str = Field(
-        default="gemini-1.5-flash", description="Gemini model to use"
+        default="gemini-2.5-flash", description="Gemini model to use"
     )
     LLM_TEMPERATURE: float = Field(
         default=0.7, description="Temperature for LLM responses"
