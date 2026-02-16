@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     # vector store configurations
     EMBEDDING_MODEL: str = Field(
-        default="models/embedding-001", description="Gemini embedding model"
+        default="models/gemini-embedding-001", description="Gemini embedding model"
     )
     CHUNK_SIZE: int = Field(default=500, description="Document chunk size for RAG")
     CHUNK_OVERLAP: int = Field(default=50, description="Overlap between chunks")
