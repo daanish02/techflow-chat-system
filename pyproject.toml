@@ -7,10 +7,12 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.129.0",
     "graphviz>=0.21",
+    "langchain>=1.2.10",
     "langchain-chroma>=1.1.0",
     "langchain-core>=1.2.13",
     "langchain-google-genai>=4.2.0",
     "langchain-text-splitters>=1.1.0",
+    "langfuse>=3.14.2",
     "langgraph>=1.0.8",
     "pandas>=3.0.0",
     "pydantic>=2.12.5",

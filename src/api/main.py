@@ -163,6 +163,29 @@ async def chat(request: ChatRequest) -> ChatResponse:
         # get agent graph
         graph = get_agent_graph()
 
+        # add langfuse tracing if enabled
+        config = {}
+        if settings.langfuse_enabled:
+            langfuse_handler = get_langfuse_handler()
+
+            if langfuse_handler:
+                # create trace metadata with langfuse keys
+                trace_metadata = create_trace_metadata(
+                    customer_id=state.get("customer_id"),
+                    intent=state.get("intent"),
+                    agent=state.get("current_agent"),
+                    message_count=len(state["messages"]),
+                )
+
+                # add session and user tracking
+                trace_metadata["langfuse_session_id"] = session_id
+                if state.get("customer_id"):
+                    trace_metadata["langfuse_user_id"] = state["customer_id"]
+
+                config["callbacks"] = [langfuse_handler]
+                config["metadata"] = trace_metadata
+                logger.debug("Langfuse tracing enabled for this request")
+
         # invoke agent graph
         logger.info(f"Invoking agent graph for session {session_id}")
         result_state = graph.invoke(state, config=config)
