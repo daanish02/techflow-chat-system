@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environmental files
+.env
+
+# Personal files
+not-for-git/
