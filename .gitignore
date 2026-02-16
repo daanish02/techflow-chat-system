@@ -16,5 +16,8 @@ wheels/
 logs/
 *.log
 
+# Vector database
+chroma_db/
+
 # Personal files
 not-for-git/
