@@ -5,6 +5,8 @@ description = "Multi-agent customer support chat system for retention"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "langchain-core>=1.2.13",
+    "pandas>=3.0.0",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.0",
 ]
