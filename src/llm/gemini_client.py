@@ -3,6 +3,7 @@
 from typing import Any, List, Optional
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.runnables import Runnable
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.config import settings
@@ -64,7 +65,7 @@ def get_llm(
         raise
 
 
-def get_llm_with_tools(tools: List[Any], **kwargs: Any) -> BaseChatModel:
+def get_llm_with_tools(tools: List[Any], **kwargs: Any) -> Runnable:
     """
     Get LLM configured with tool binding.
 
@@ -100,7 +101,7 @@ def create_agent_llm(
     agent_name: str,
     tools: Optional[List[Any]] = None,
     temperature: Optional[float] = None,
-) -> BaseChatModel:
+) -> BaseChatModel | Runnable:
     """
     Create an LLM instance configured for a specific agent.
 
