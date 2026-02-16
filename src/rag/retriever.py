@@ -6,7 +6,7 @@ from langchain_core.documents import Document
 
 from src.config import settings
 from src.rag.vector_store import get_vector_store
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
