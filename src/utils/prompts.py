@@ -3,7 +3,7 @@
 from typing import Dict
 
 from src.config import settings
-from src.logger import get_logger
+from .logger import get_logger
 
 logger = get_logger(__name__)
 
