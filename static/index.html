@@ -1,44 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TechFlow Chat System</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <div class="chat-container">
-        <div class="chat-header">
-            <h1>TechFlow Chat System</h1>
-            <p class="subtitle">How can we help you today?</p>
-        </div>
+      <div class="chat-header">
+        <h1>TechFlow Chat System</h1>
+        <p class="subtitle">How can we help you today?</p>
+      </div>
 
-        <div class="chat-window" id="chatWindow">
-            <div class="message bot-message">
-                <div class="message-content">
-                    Welcome to TechFlow Chat! I'm here to help with any questions or issues you may have.
-                </div>
-            </div>
+      <div class="chat-window" id="chatWindow">
+        <div class="message bot-message">
+          <div class="message-content">
+            Welcome to TechFlow Chat! I'm here to help with any questions or
+            issues you may have.
+          </div>
         </div>
+      </div>
 
-        <div class="chat-input-area">
-            <form id="chatForm" class="chat-form">
-                <input 
-                    type="text" 
-                    id="messageInput" 
-                    placeholder="Type your message here..." 
-                    class="chat-input"
-                    autocomplete="off"
-                >
-                <button type="submit" class="send-button">Send</button>
-            </form>
-            <div class="loading-indicator" id="loadingIndicator">
-                <span class="spinner"></span>
-                <span>Processing...</span>
-            </div>
+      <div class="chat-input-area">
+        <form id="chatForm" class="chat-form">
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Type your message here..."
+            class="chat-input"
+            autocomplete="off"
+          />
+          <button type="submit" class="send-button">Send</button>
+        </form>
+        <div class="loading-indicator" id="loadingIndicator">
+          <span class="spinner"></span>
+          <span>Processing...</span>
         </div>
+      </div>
     </div>
 
     <script src="app.js"></script>
-</body>
+  </body>
 </html>
