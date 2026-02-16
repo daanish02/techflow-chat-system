@@ -60,12 +60,26 @@ def classify_intent(text: str) -> str:
         "don't need",
     ]
 
+    billing_keywords = [
+        "bill",
+        "charged",
+        "charges",
+        "cost",
+        "price",
+        "invoice",
+        "payment",
+        "refund",
+        "amount",
+    ]
+
     tech_keywords = [
         "broken",
         "not working",
         "screen",
         "battery",
-        "charge",
+        "charging",
+        "won't charge",
+        "wont charge",
         "won't turn on",
         "glitch",
         "repair",
@@ -73,25 +87,13 @@ def classify_intent(text: str) -> str:
         "overheating",
     ]
 
-    billing_keywords = [
-        "bill",
-        "charge",
-        "cost",
-        "price",
-        "invoice",
-        "payment",
-        "refund",
-        "amount",
-        "charged",
-    ]
-
-    # check keywords
+    # check keywords - billing first (specific), then cancellation, then technical
+    if any(k in text for k in billing_keywords):
+        return "billing"
     if any(k in text for k in cancellation_keywords):
         return "cancellation"
     if any(k in text for k in tech_keywords):
         return "technical"
-    if any(k in text for k in billing_keywords):
-        return "billing"
 
     return "general"
 
@@ -131,7 +133,7 @@ async def greeter_node(
 
         if email:
             logger.info(f"Detected email: {email}")
-            customer = get_customer_data.invoke({"email": email})
+            customer = get_customer_data.invoke(email)
 
             if "error" not in customer:
                 updates["customer_data"] = customer
@@ -192,3 +194,12 @@ async def greeter_node(
         logger.info("Staying with Greeter Agent")
 
     return updates
+
+
+def greeter_node_sync(
+    state: ConversationState, config: RunnableConfig
+) -> Dict[str, Any]:
+    """Synchronous wrapper for greeter_node."""
+    import asyncio
+
+    return asyncio.run(greeter_node(state, config))
