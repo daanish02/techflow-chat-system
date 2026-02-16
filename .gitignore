@@ -12,5 +12,9 @@ wheels/
 # Environmental files
 .env
 
+# Logs
+logs/
+*.log
+
 # Personal files
 not-for-git/
