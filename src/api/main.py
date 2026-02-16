@@ -2,10 +2,26 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.schemas import ConfigResponse, HealthResponse
+from langchain_core.messages import HumanMessage
+
+from src.agents import get_agent_graph
+from src.api.schemas import (
+    AgentInfo,
+    ChatRequest,
+    ChatResponse,
+    ConfigResponse,
+    ErrorResponse,
+    HealthResponse,
+)
+from src.api.session import (
+    create_session,
+    get_session,
+    get_session_count,
+    update_session,
+)
 from src.config import settings
 from src.rag import get_vector_store
 from src.utils.logger import get_logger
@@ -104,6 +120,114 @@ async def health_check() -> HealthResponse:
         health_status["llm"] = "unhealthy"
 
     return HealthResponse(**health_status)
+
+
+@app.post(
+    "/chat",
+    response_model=ChatResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def chat(request: ChatRequest) -> ChatResponse:
+    """
+    Chat endpoint for customer conversations.
+
+    Handles:
+    - New conversations (no session_id)
+    - Continuing conversations (with session_id)
+    - Multi-agent orchestration
+    - Session state management
+    """
+    try:
+        # determine session
+        if request.session_id:
+            # continue existing conversation
+            state = get_session(request.session_id)
+            if not state:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Session {request.session_id} not found or expired",
+                )
+            session_id = request.session_id
+            logger.info(f"Continuing session: {session_id}")
+
+            # add user message to state
+            state["messages"].append(HumanMessage(content=request.message))
+        else:
+            # create new conversation
+            session_id, state = create_session(request.message)
+            logger.info(f"New session created: {session_id}")
+
+        # get agent graph
+        graph = get_agent_graph()
+
+        # invoke agent graph
+        logger.info(f"Invoking agent graph for session {session_id}")
+        result_state = graph.invoke(state, config=config)
+
+        # update session
+        update_session(session_id, result_state)
+
+        # extract response
+        last_message = result_state["messages"][-1]
+        response_text = last_message.content
+
+        # determine current agent and status
+        current_agent = result_state.get("current_agent", "unknown")
+        routing = result_state.get("routing_decision", "active")
+
+        # determine conversation status
+        if routing == "end":
+            conversation_status = "completed"
+        elif routing in ["tech_support", "billing"]:
+            conversation_status = "escalated"
+        else:
+            conversation_status = "active"
+
+        # agent info
+        agent_info = AgentInfo(
+            name=current_agent, action=result_state.get("final_action")
+        )
+
+        metadata = {
+            "message_count": len(result_state["messages"]),
+            "intent": result_state.get("intent"),
+            "customer_id": result_state.get("customer_id"),
+        }
+
+        # create response
+        response = ChatResponse(
+            message=response_text,
+            session_id=session_id,
+            agent=agent_info,
+            conversation_status=conversation_status,
+            customer_authenticated=result_state.get("customer_data") is not None,
+            metadata=metadata,
+        )
+
+        logger.info(
+            f"Session {session_id}: {current_agent} -> {conversation_status} "
+            f"({len(result_state['messages'])} messages)"
+        )
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}",
+        )
+
+
+@app.get("/sessions/count")
+async def session_count():
+    """Get number of active sessions."""
+    return {"active_sessions": get_session_count()}
 
 
 @app.get("/config", response_model=ConfigResponse)
