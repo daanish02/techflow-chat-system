@@ -11,6 +11,10 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+sys.stdout.reconfigure(line_buffering=True) if hasattr(
+    sys.stdout, "reconfigure"
+) else None
+
 
 def print_banner():
     """Print welcome banner."""
@@ -36,14 +40,14 @@ def run_cli_chat():
         logger.info("Initializing RAG vector store...")
         try:
             vector_store = get_vector_store()
-            logger.info("✓ Vector store initialized")
+            logger.info("Vector store initialized")
         except Exception as e:
             logger.warning(f"Could not initialize vector store: {e}")
-            print("⚠ Warning: RAG vector store not available")
+            print("Warning: RAG vector store not available")
 
         logger.info("Loading agent graph...")
         agent_graph = get_agent_graph()
-        logger.info("✓ Agent graph loaded")
+        logger.info("Agent graph loaded")
 
         print("You can now start chatting. Type 'exit' to quit.\n")
 
@@ -77,8 +81,8 @@ def run_cli_chat():
                     agent_name = result_state.get("current_agent", "Assistant").title()
 
                     print(format_response(last_message.content, agent_name))
+                    sys.stdout.flush()
 
-                    # Log routing decision if applicable
                     routing = result_state.get("routing_decision")
                     if routing and routing != "__end__":
                         logger.debug(f"Routing decision: {routing}")
