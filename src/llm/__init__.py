@@ -1,6 +1,6 @@
-"""LLM module for Gemini client."""
+"""LLM module for OpenAI client."""
 
-from src.llm.gemini_client import (
+from src.llm.openai_client import (
     create_agent_llm,
     get_llm,
     get_llm_with_tools,
