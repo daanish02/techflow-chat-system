@@ -5,8 +5,7 @@ from typing import List, Optional
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from pydantic import SecretStr
+from langchain_openai import OpenAIEmbeddings
 
 from src.config import settings
 from src.utils.logger import get_logger
@@ -14,18 +13,18 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def get_embeddings() -> GoogleGenerativeAIEmbeddings:
+def get_embeddings() -> OpenAIEmbeddings:
     """
     Get the embeddings model for document vectorization.
 
-    Uses Google's Gemini embedding model for converting text to vectors.
+    Uses OpenAI's embedding model for converting text to vectors.
 
     Returns:
-        GoogleGenerativeAIEmbeddings instance
+        OpenAIEmbeddings instance
     """
-    return GoogleGenerativeAIEmbeddings(
+    return OpenAIEmbeddings(
         model=settings.EMBEDDING_MODEL,
-        google_api_key=SecretStr(settings.GEMINI_API_KEY),
+        api_key=settings.OPENAI_API_KEY,
     )
 
 
