@@ -3,7 +3,7 @@
 import re
 from typing import Dict, Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 
@@ -43,10 +43,16 @@ def classify_intent(text: str) -> str:
 
     Simple rule-based classification as a fallback or pre-processor.
     The LLM will do the heavy lifting, but this helps with routing logic.
+
+    Priority order:
+    1. Cancellation (checked first - even with technical issues, if they want to cancel, route to retention)
+    2. Billing (specific financial questions)
+    3. Technical (device issues without cancellation intent)
+    4. General (fallback)
     """
     text = text.lower()
 
-    # intent keywords
+    # cancellation keywords
     cancellation_keywords = [
         "cancel",
         "terminate",
@@ -56,8 +62,13 @@ def classify_intent(text: str) -> str:
         "afford",
         "switching",
         "don't need",
+        "no longer",
+        "get rid of",
+        "remove",
+        "return it and cancel",  # explicit cancellation
     ]
 
+    # billing keywords
     billing_keywords = [
         "bill",
         "charged",
@@ -68,14 +79,20 @@ def classify_intent(text: str) -> str:
         "payment",
         "refund",
         "amount",
+        "how much",
+        "why was i",
+        "fee",
+        "extra charge",
     ]
 
+    # technical keywords
     tech_keywords = [
         "broken",
         "not working",
         "screen",
         "battery",
         "charging",
+        "charge",
         "won't charge",
         "wont charge",
         "won't turn on",
@@ -83,16 +100,30 @@ def classify_intent(text: str) -> str:
         "repair",
         "fix",
         "overheating",
+        "crash",
+        "freeze",
+        "defect",
+        "hardware",
+        "device issue",
+        "phone issue",
+        "problem with",
     ]
 
-    # check keywords
-    if any(k in text for k in billing_keywords):
-        return "billing"
     if any(k in text for k in cancellation_keywords):
+        logger.debug(
+            "classify_intent: Found cancellation keywords, returning 'cancellation'"
+        )
         return "cancellation"
+
+    if any(k in text for k in billing_keywords):
+        logger.debug("classify_intent: Found billing keywords, returning 'billing'")
+        return "billing"
+
     if any(k in text for k in tech_keywords):
+        logger.debug("classify_intent: Found tech keywords, returning 'technical'")
         return "technical"
 
+    logger.debug("classify_intent: No keywords matched, returning 'general'")
     return "general"
 
 
@@ -152,11 +183,18 @@ async def greeter_node(
             logger.info(f"Classified intent: {intent}")
 
     # generate response
-    # if updates to state are made, run the chain with new context
+    merged_state = state.copy()
+    merged_state.update(updates)
+
     chain = get_greeter_runnable()
 
-    # invoke chain
-    response = await chain.ainvoke(state)
+    logger.info("Invoking LLM chain...")
+    try:
+        response = await chain.ainvoke(merged_state)
+        logger.info("LLM chain invocation completed")
+    except Exception as e:
+        logger.error(f"Error invoking LLM chain: {e}", exc_info=True)
+        raise
 
     # add response to updates - include all existing messages plus new response
     updates["messages"] = state["messages"] + [response]
@@ -169,6 +207,9 @@ async def greeter_node(
     is_auth = state.get("customer_data") or updates.get("customer_data")
     intent = state.get("intent") or updates.get("intent")
 
+    is_auth_status = "yes" if is_auth else "no"
+    logger.info(f"Routing decision: authenticated={is_auth_status}, intent={intent}")
+
     if is_auth and intent == "cancellation":
         updates["routing_decision"] = "retention"
         logger.info("Routing to Retention Agent")
@@ -179,7 +220,6 @@ async def greeter_node(
         updates["routing_decision"] = "billing"
         logger.info("Routing to Billing (End)")
     else:
-        # Don't set routing_decision - this will cause route_from_greeter to return "__end__"
         logger.info("Not enough info yet - ending turn, waiting for next input")
 
     return updates
