@@ -18,7 +18,9 @@ class Settings(BaseSettings):
     )
 
     # API keys
-    GEMINI_API_KEY: str = Field(..., description="Google Gemini API key")
+    OPENAI_API_KEY: Optional[str] = Field(
+        default=None, description="OpenAI API key"
+    )
     LANGFUSE_PUBLIC_KEY: Optional[str] = Field(
         None, description="Langfuse public key for tracing"
     )
@@ -36,7 +38,7 @@ class Settings(BaseSettings):
 
     # model configurations
     LLM_MODEL: str = Field(
-        default="gemini-2.5-flash", description="Gemini model to use"
+        default="gpt-4o-mini", description="OpenAI model to use"
     )
     LLM_TEMPERATURE: float = Field(
         default=0.7, description="Temperature for LLM responses"
@@ -56,7 +58,7 @@ class Settings(BaseSettings):
 
     # vector store configurations
     EMBEDDING_MODEL: str = Field(
-        default="models/gemini-embedding-001", description="Gemini embedding model"
+        default="text-embedding-3-small", description="OpenAI embedding model"
     )
     CHUNK_SIZE: int = Field(default=500, description="Document chunk size for RAG")
     CHUNK_OVERLAP: int = Field(default=50, description="Overlap between chunks")
@@ -64,13 +66,13 @@ class Settings(BaseSettings):
         default=3, description="Number of RAG results to retrieve"
     )
 
-    @field_validator("GEMINI_API_KEY")
+    @field_validator("OPENAI_API_KEY")
     @classmethod
-    def validate_gemini_key(cls, v: str) -> str:
-        """Validate Gemini API key is not placeholder."""
-        if not v or v.startswith("your_"):
+    def validate_openai_key(cls, v: Optional[str]) -> Optional[str]:
+        """Validate OpenAI API key is not placeholder."""
+        if v and v.startswith("your_"):
             raise ValueError(
-                "GEMINI_API_KEY must be set. Get one from https://makersuite.google.com/app/apikey"
+                "OPENAI_API_KEY must be set. Get one from https://platform.openai.com/account/api-keys"
             )
         return v
 
