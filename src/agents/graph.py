@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 def route_from_greeter(
     state: ConversationState,
-) -> Literal["retention", "tech_support", "billing", "greeter"]:
+) -> Literal["retention", "tech_support", "billing", "__end__"]:
     """
     Route from greeter based on intent classification.
 
@@ -23,7 +23,7 @@ def route_from_greeter(
     - retention: If cancellation intent
     - tech_support: If technical issue (terminal node)
     - billing: If billing question (terminal node)
-    - greeter: Stay with greeter for more info
+    - __end__: End turn, wait for next user input
     """
     routing = state.get("routing_decision")
 
@@ -37,17 +37,17 @@ def route_from_greeter(
         logger.info("Routing: greeter -> billing (end)")
         return "billing"
     else:
-        logger.info("Routing: greeter -> greeter (continue)")
-        return "greeter"
+        logger.info("Routing: greeter -> END (end turn, wait for next input)")
+        return "__end__"
 
 
-def route_from_retention(state: ConversationState) -> Literal["processor", "retention"]:
+def route_from_retention(state: ConversationState) -> Literal["processor", "__end__"]:
     """
     Route from retention based on customer decision.
 
     Routes to:
     - processor: If customer made a decision (accept or decline)
-    - retention: Continue retention conversation
+    - __end__: End turn, wait for next user input
     """
     routing = state.get("routing_decision")
 
@@ -55,8 +55,8 @@ def route_from_retention(state: ConversationState) -> Literal["processor", "rete
         logger.info("Routing: retention -> processor")
         return "processor"
     else:
-        logger.info("Routing: retention -> retention (continue)")
-        return "retention"
+        logger.info("Routing: retention -> END (end turn, wait for next input)")
+        return "__end__"
 
 
 def create_agent_graph() -> StateGraph:
@@ -64,8 +64,9 @@ def create_agent_graph() -> StateGraph:
     Create and compile the multi-agent conversation graph.
 
     Graph structure:
-        START -> greeter -> [retention | tech_support | billing]
-                retention -> processor -> END
+        START -> greeter -> [retention | tech_support | billing | END]
+                retention -> [processor | END]
+                processor -> END
                 tech_support -> END
                 billing -> END
 
@@ -118,7 +119,7 @@ def create_agent_graph() -> StateGraph:
             "retention": "retention",
             "tech_support": "tech_support",
             "billing": "billing",
-            "greeter": "greeter",  # loop back
+            "__end__": END,
         },
     )
 
@@ -128,7 +129,7 @@ def create_agent_graph() -> StateGraph:
         route_from_retention,
         {
             "processor": "processor",
-            "retention": "retention",  # loop back
+            "__end__": END,
         },
     )
 

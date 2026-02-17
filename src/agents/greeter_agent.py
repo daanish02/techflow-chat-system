@@ -25,9 +25,7 @@ def get_greeter_runnable():
         ]
     )
 
-    # greeter needs customer lookup tool
-    tools = [get_customer_data]
-    llm = create_agent_llm("greeter", tools=tools, temperature=0.0)
+    llm = create_agent_llm("greeter", tools=None, temperature=0.0)
 
     return prompt | llm
 
@@ -87,7 +85,7 @@ def classify_intent(text: str) -> str:
         "overheating",
     ]
 
-    # check keywords - billing first (specific), then cancellation, then technical
+    # check keywords
     if any(k in text for k in billing_keywords):
         return "billing"
     if any(k in text for k in cancellation_keywords):
@@ -140,13 +138,6 @@ async def greeter_node(
                 updates["customer_email"] = email
                 updates["customer_id"] = customer["customer_id"]
                 logger.info(f"Authenticated customer: {customer['name']}")
-
-                # system message about authentication
-                updates["messages"] = [
-                    SystemMessage(
-                        content=f"Authenticated customer: {customer['name']} ({customer['email']})"
-                    )
-                ]
             else:
                 logger.warning(f"Customer lookup failed for {email}")
 
@@ -167,14 +158,12 @@ async def greeter_node(
     # invoke chain
     response = await chain.ainvoke(state)
 
-    # add response to updates
-    if "messages" not in updates:
-        updates["messages"] = []
-    updates["messages"].append(response)
+    # add response to updates - include all existing messages plus new response
+    updates["messages"] = state["messages"] + [response]
 
     # update routing decision
     # if authenticated and intent is clear, route to appropriate agent
-    # else, stay with greeter to get more info
+    # else, end turn and wait for next user input
 
     # determine next step based on state and new updates
     is_auth = state.get("customer_data") or updates.get("customer_data")
@@ -190,16 +179,14 @@ async def greeter_node(
         updates["routing_decision"] = "billing"
         logger.info("Routing to Billing (End)")
     else:
-        updates["routing_decision"] = "greeter"  # stays here
-        logger.info("Staying with Greeter Agent")
+        # Don't set routing_decision - this will cause route_from_greeter to return "__end__"
+        logger.info("Not enough info yet - ending turn, waiting for next input")
 
     return updates
 
 
-def greeter_node_sync(
+async def greeter_node_sync(
     state: ConversationState, config: RunnableConfig
 ) -> Dict[str, Any]:
-    """Synchronous wrapper for greeter_node."""
-    import asyncio
-
-    return asyncio.run(greeter_node(state, config))
+    """Async wrapper for greeter_node."""
+    return await greeter_node(state, config)

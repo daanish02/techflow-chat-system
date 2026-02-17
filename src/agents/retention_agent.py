@@ -25,9 +25,7 @@ def get_retention_runnable():
         ]
     )
 
-    # agent needs offer calculation tool
-    tools = [calculate_retention_offer]
-    llm = create_agent_llm("retention", tools=tools, temperature=0.7)
+    llm = create_agent_llm("retention", tools=None, temperature=0.7)
 
     return prompt | llm
 
@@ -214,12 +212,11 @@ async def retention_node(
 
     response = await chain.ainvoke(response_state)
 
-    # Add response to updates
-    if "messages" not in updates:
-        updates["messages"] = []
+    # Add response to updates - include all existing messages + context + response
     if context_messages:
-        updates["messages"].extend(context_messages)
-    updates["messages"].append(response)
+        updates["messages"] = state["messages"] + context_messages + [response]
+    else:
+        updates["messages"] = state["messages"] + [response]
 
     # determine routing
     # check if customer has made a decision
@@ -266,17 +263,15 @@ async def retention_node(
         updates["routing_decision"] = "processor"
         logger.info("Customer declining offers, routing to Processor for cancellation")
     else:
-        # continue conversation
-        updates["routing_decision"] = "retention"
-        logger.info("Continuing retention conversation")
+        logger.info(
+            "Continuing retention conversation - ending turn, waiting for next input"
+        )
 
     return updates
 
 
-def retention_node_sync(
+async def retention_node_sync(
     state: ConversationState, config: RunnableConfig
 ) -> Dict[str, Any]:
-    """Synchronous wrapper for retention_node."""
-    import asyncio
-
-    return asyncio.run(retention_node(state, config))
+    """Async wrapper for retention_node."""
+    return await retention_node(state, config)
