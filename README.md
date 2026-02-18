@@ -18,3 +18,23 @@ Agents use RAG to retrieve policy information and call tools to access customer 
 - UV package manager
 - Google Gemini API key
 - Langfuse account (optional, for observability)
+
+## Project Setup
+
+After cloning the project, go into projects root directory and run.
+
+```bash
+uv sync
+```
+
+followed by,
+
+```bash
+uv run scripts/test_cli_scenarios.py
+```
+
+You can also run to chat for custom queries.
+
+```bash
+uv run cli_chat.py
+```
