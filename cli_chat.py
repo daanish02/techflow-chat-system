@@ -100,7 +100,7 @@ def run_cli_chat():
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        print(f"\n❌ Fatal error: {e}")
+        print(f"\nFatal error: {e}")
         return 1
 
     return 0
